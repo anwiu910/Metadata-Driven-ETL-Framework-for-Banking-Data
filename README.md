@@ -1,307 +1,461 @@
-# Transaction Risk Analytics & Early Warning Platform
+# Metadata-Driven ETL Framework for Banking Data
 
-**Python | PySpark | SQL | Azure Data Lake | Databricks | Delta Lake | Power BI**
-
-## 📌 Project Overview
-
-The **Transaction Risk Analytics & Early Warning Platform** is an end-to-end data engineering and analytics project designed to process transaction data and identify potentially high-risk customers, transactions, and merchants.
-
-The project demonstrates a cloud-based data pipeline using **Azure Data Lake and Databricks**, with **Python, PySpark, SQL, Delta Lake, and Power BI** used for data processing, risk analytics, and visualization.
-
-The platform follows a **Bronze–Silver–Gold architecture**, enabling structured data processing from raw ingestion through cleaned datasets and business-ready risk analytics.
+An end-to-end **Data Engineering pipeline built on Databricks** to ingest, transform, and analyze banking data from Azure SQL Server and CSV sources. The project implements a reusable **metadata-driven ETL framework**, Medallion Architecture, incremental data processing, and automated workflow orchestration.
 
 ---
 
-## 🎯 Objectives
+## 📌 Project Overview
 
-* Build an end-to-end cloud data pipeline for transaction data.
-* Process structured and semi-structured datasets using Python and PySpark.
-* Implement scalable ETL/ELT transformations using Databricks.
-* Store and manage processed data using Delta Lake.
-* Develop SQL-based transaction risk analytics.
-* Create an explainable risk-scoring framework.
-* Identify high-risk customers, transactions, and merchants.
-* Build an early-warning dashboard for risk monitoring.
+The goal of this project is to build a scalable banking data platform that integrates data from multiple sources and transforms it into business-ready datasets for analytics.
+
+The pipeline supports different ingestion strategies based on metadata and processes data through **Bronze, Silver, and Gold layers**.
+
+### Data Sources
+
+* **Azure SQL Server**
+
+  * Customers
+  * Accounts
+  * Transactions
+  * Branches
+
+* **CSV Files**
+
+  * Credit Bureau Data
+  * Payment Gateway Data
 
 ---
 
 ## 🏗️ Architecture
 
 ```text
-                Transaction Data
-                       │
-                       ▼
-              Azure Data Lake
-                       │
-                       ▼
-              ┌────────────────┐
-              │ Bronze Layer   │
-              │ Raw Data       │
-              └────────────────┘
-                       │
-                       ▼
-              Databricks / PySpark
-                       │
-                       ▼
-              ┌────────────────┐
-              │ Silver Layer   │
-              │ Cleaned Data   │
-              │ Validated Data │
-              └────────────────┘
-                       │
-                       ▼
-                 SQL Analytics
-                       │
-                       ▼
-              ┌────────────────┐
-              │ Gold Layer     │
-              │ Risk Metrics   │
-              │ Risk Scores    │
-              └────────────────┘
-                       │
-                       ▼
-                 Power BI
-                       │
-                       ▼
-           Risk Monitoring Dashboard
+                    DATA SOURCES
+                         │
+             ┌───────────┴───────────┐
+             │                       │
+       Azure SQL Server          CSV Files
+             │                       │
+           JDBC                 Auto Loader
+             │                       │
+             └───────────┬───────────┘
+                         ↓
+                  ┌─────────────┐
+                  │   BRONZE    │
+                  │ Raw Data    │
+                  └──────┬──────┘
+                         ↓
+                  ┌─────────────┐
+                  │   SILVER    │
+                  │ Cleaned &   │
+                  │ Refined Data│
+                  └──────┬──────┘
+                         ↓
+                  ┌─────────────┐
+                  │    GOLD     │
+                  │ Business    │
+                  │ Analytics   │
+                  └──────┬──────┘
+                         │
+              ┌──────────┴──────────┐
+              ↓                     ↓
+       Databricks Dashboards      Genie
+              │                     │
+              └──────────┬──────────┘
+                         ↓
+                  Business Users
 ```
 
----
-
-## 🔄 Data Pipeline
-
-### 1. Data Ingestion — Bronze
-
-Raw transaction data is ingested into the **Bronze layer** while preserving the original data structure.
-
-Typical data may include:
-
-* Transaction information
-* Customer information
-* Merchant information
-* Geographic information
-* Transaction timestamps
-* Transaction amounts
-* Transaction categories
+The framework is supported by **metadata tables, watermarks, audit logging, Databricks Jobs, and Unity Catalog**.
 
 ---
 
-### 2. Data Cleaning & Transformation — Silver
+## 🛠️ Technologies Used
 
-The Silver layer contains cleaned and validated datasets.
-
-Key transformations include:
-
-* Handling missing values
-* Removing duplicate records
-* Data type standardization
-* Timestamp and date transformations
-* Validation of transaction attributes
-* Data quality checks
-* Derivation of analytical features
-
-PySpark is used to perform scalable transformations within Databricks.
-
----
-
-### 3. Risk Analytics — Gold
-
-The Gold layer contains business-ready datasets and risk metrics used for analysis and reporting.
-
-Risk indicators are derived from multiple dimensions, including:
-
-* **Transaction behaviour**
-* **Customer behaviour**
-* **Geographic patterns**
-* **Merchant behaviour**
-* **Transaction amount patterns**
-* **Transaction frequency**
-* **Unusual activity indicators**
-
-These features are combined into an **explainable transaction risk score** to support early identification of potentially suspicious activity.
+* **Databricks**
+* **PySpark**
+* **Python**
+* **SQL**
+* **Delta Lake**
+* **Azure SQL Server**
+* **Databricks Auto Loader**
+* **JDBC**
+* **Unity Catalog**
+* **Databricks Jobs**
+* **Databricks SQL Dashboards**
+* **Databricks Genie**
 
 ---
 
-## 📊 Risk Scoring Framework
+## ⚙️ Key Features
 
-The project uses a rule-based / feature-driven approach to generate an interpretable risk score.
+### 1. Metadata-Driven ETL
 
-Example risk dimensions:
+Instead of creating separate ingestion logic for every source table, the framework uses metadata to determine how each table should be processed.
 
-| Risk Dimension   | Example Indicator                      |
-| ---------------- | -------------------------------------- |
-| Transaction Risk | Unusual transaction amount             |
-| Behavioural Risk | Sudden change in transaction behaviour |
-| Geographic Risk  | Unusual geographic activity            |
-| Merchant Risk    | Merchant-level risk patterns           |
-| Frequency Risk   | Abnormally high transaction frequency  |
+Metadata controls parameters such as:
 
-The resulting score can be categorized into different risk levels such as:
+* Source table
+* Target table
+* Load strategy
+* Primary key
+* Watermark column
+* Active/inactive status
+* Processing configuration
+
+This allows the same ETL framework to process multiple datasets with minimal code changes.
+
+---
+
+### 2. Multiple Load Strategies
+
+The framework supports three ingestion strategies:
+
+#### Full Load
+
+Reloads the complete source dataset and replaces the target data.
 
 ```text
-Low Risk       → Normal activity
-Medium Risk    → Requires monitoring
-High Risk      → Requires investigation
+Source
+  ↓
+Read Full Dataset
+  ↓
+Target
 ```
 
-The framework is designed to be **explainable**, allowing analysts to understand which indicators contributed to a transaction or entity being classified as high risk.
+#### Append Load
+
+Adds newly received records to the existing dataset.
+
+```text
+Existing Data + New Records
+           ↓
+        Target
+```
+
+#### Merge Load
+
+Updates existing records and inserts new records based on a primary key.
+
+```text
+If Key Exists → UPDATE
+If Key Doesn't Exist → INSERT
+```
 
 ---
 
-## 🗄️ Data Engineering Architecture
+## 🥉 Bronze Layer
 
-The project follows the **Medallion Architecture**:
+The Bronze layer stores raw data ingested from the source systems.
 
-### Bronze
+### SQL Server
 
-Raw, minimally processed transaction data.
+Data is extracted using **JDBC**.
 
-### Silver
+```text
+Azure SQL Server
+       ↓
+      JDBC
+       ↓
+Bronze Delta Tables
+```
 
-Cleaned, standardized, validated and enriched datasets.
+### CSV Sources
 
-### Gold
+CSV files are ingested using **Databricks Auto Loader**.
 
-Aggregated risk metrics, risk scores and analytical datasets optimized for reporting.
+```text
+CSV Files
+    ↓
+Auto Loader
+    ↓
+Bronze Delta Tables
+```
 
-Delta tables are used to support reliable storage and analytical processing across the pipeline.
-
----
-
-## 📈 Power BI Dashboard
-
-The Power BI dashboard provides an interactive view of transaction risk and early-warning indicators.
-
-### Key monitoring areas
-
-* Total transactions
-* Total transaction value
-* High-risk transactions
-* High-risk customers
-* High-risk merchants
-* Risk distribution
-* Geographic risk patterns
-* Transaction trends
-* Risk-score distribution
-
-### Example Dashboard Questions
-
-The dashboard is designed to help answer questions such as:
-
-* Which customers have the highest risk exposure?
-* Which merchants generate the most high-risk transactions?
-* Where are high-risk transactions concentrated geographically?
-* How does transaction risk change over time?
-* Which transactions require further investigation?
+Auto Loader uses checkpoint and schema information to track processed files and support incremental file ingestion.
 
 ---
 
-## 🛠️ Technology Stack
+## 🥈 Silver Layer
 
-| Technology          | Purpose                                   |
-| ------------------- | ----------------------------------------- |
-| **Python**          | Data processing and analytical logic      |
-| **PySpark**         | Distributed data transformation           |
-| **SQL**             | Risk analytics and aggregations           |
-| **Azure Data Lake** | Cloud data storage                        |
-| **Databricks**      | Data engineering and pipeline execution   |
-| **Delta Lake**      | Reliable analytical data storage          |
-| **Power BI**        | Risk monitoring and visualization         |
-| **GitHub**          | Version control and project documentation |
+The Silver layer contains refined and processed data.
+
+Depending on the metadata configuration, data is processed using:
+
+* Full Load
+* Append
+* Merge
+
+For incrementally changing datasets, watermark-based filtering is used to identify newly added or updated records.
+
+### Watermark-Based Processing
+
+The framework stores the latest processed watermark and uses it during the next pipeline execution.
+
+```text
+Previous Watermark
+        ↓
+Filter Source Records
+        ↓
+Process New/Updated Records
+        ↓
+Update Watermark
+```
+
+This avoids repeatedly processing the entire source dataset.
+
+---
+
+## 🥇 Gold Layer
+
+The Gold layer contains business-ready datasets created from the Silver layer.
+
+### Branch Performance
+
+Provides branch-level analytics using banking data such as:
+
+* Customers
+* Accounts
+* Transactions
+* Branch information
+
+---
+
+### Customer 360
+
+Combines customer information with account, transaction, and credit-related data to provide a consolidated customer view.
+
+Example analytics include:
+
+* Customer information
+* Account information
+* Total balance
+* Transaction activity
+* Credit information
+* Customer segmentation
+
+---
+
+### Daily Bank KPIs
+
+Provides daily business metrics such as:
+
+* Customer count
+* Account count
+* Transaction count
+* Transaction amount
+* Total balance
+* Credit-related KPIs
+
+---
+
+### Transaction Channel Analysis
+
+Combines transaction and payment gateway information to analyze:
+
+* Transaction volume
+* Successful transactions
+* Failed transactions
+* Payment gateways
+* Device types
+* Processing performance
+
+---
+
+## 🔄 Pipeline Orchestration
+
+The complete workflow is orchestrated using **Databricks Jobs**.
+
+```text
+             Master Job
+                 │
+       ┌─────────┴─────────┐
+       ↓                   ↓
+ SQL Server Pipeline   CSV Pipeline
+       │                   │
+       └─────────┬─────────┘
+                 ↓
+           Silver Layer
+                 ↓
+            Gold Layer
+                 ↓
+           Data Refresh
+                 ↓
+       Dashboard / Genie
+```
+
+The workflow uses:
+
+* Task dependencies
+* Parallel task execution
+* Retries
+* Parameter passing
+* Error handling
+* Automated email alerts
+
+---
+
+## 📊 Audit Logging
+
+The pipeline maintains audit information for monitoring and troubleshooting.
+
+The audit framework tracks information such as:
+
+* Run ID
+* Table
+* Layer
+* Start time
+* End time
+* Processing status
+* Record counts
+* Error information
+
+Example:
+
+```text
+Run ID | Table        | Layer  | Status
+-----------------------------------------
+1001   | Customers    | Silver | SUCCESS
+1001   | Accounts     | Silver | SUCCESS
+1001   | Transactions | Silver | FAILED
+```
+
+This makes pipeline execution traceable and simplifies failure investigation.
+
+---
+
+## 🔐 Security & Governance
+
+The project uses **Unity Catalog** to organize and govern data assets.
+
+Sensitive connection information is managed using **Databricks Secret Scope** rather than hardcoding credentials inside notebooks.
+
+---
+
+## 📈 Data Analytics
+
+The Gold-layer datasets are exposed through **Databricks SQL dashboards** for business reporting.
+
+The project also uses **Databricks Genie** to enable natural-language interaction with the prepared Gold datasets.
+
+Example questions:
+
+```text
+Which branch has the highest total balance?
+
+What is the daily transaction volume?
+
+Which payment gateway has the highest failure rate?
+
+What is the average credit score by customer segment?
+```
+
+---
+
+## 🔁 Incremental Processing
+
+The project demonstrates both initial and incremental processing.
+
+### Initial Load
+
+```text
+Source
+  ↓
+Full Historical Data
+  ↓
+Bronze
+  ↓
+Silver
+  ↓
+Gold
+```
+
+### Incremental Load
+
+```text
+New / Updated Source Data
+          ↓
+   Watermark / Checkpoint
+          ↓
+        Bronze
+          ↓
+        Silver
+          ↓
+         Gold
+```
+
+This reduces unnecessary reprocessing and makes the pipeline more suitable for recurring execution.
 
 ---
 
 ## 📁 Project Structure
 
 ```text
-Transaction-Risk-Analytics/
-│
-├── data/
-│   ├── raw/
-│   └── sample/
-│
 ├── notebooks/
-│   ├── 01_data_ingestion
-│   ├── 02_data_cleaning
-│   ├── 03_feature_engineering
-│   ├── 04_risk_scoring
-│   └── 05_gold_layer
+│   ├── source_to_bronze/
+│   ├── bronze_to_silver/
+│   ├── silver_to_gold/
+│   ├── metadata/
+│   └── notifications/
 │
 ├── sql/
-│   ├── risk_analytics.sql
-│   ├── customer_risk.sql
-│   └── merchant_risk.sql
+│   ├── metadata_tables.sql
+│   ├── audit_tables.sql
+│   └── gold_transformations.sql
 │
-├── powerbi/
-│   └── risk_monitoring_dashboard.pbix
+├── data/
+│   ├── credit_bureau/
+│   └── payment_gateway/
 │
-├── docs/
-│   └── architecture.md
+├── dashboards/
 │
 └── README.md
 ```
 
 ---
 
-## 🔍 Key Analytics
+## 🚀 End-to-End Workflow
 
-The platform supports analysis across multiple levels:
-
-### Customer-Level Risk
-
-Identifies customers exhibiting unusual or elevated transaction behaviour.
-
-### Transaction-Level Risk
-
-Ranks individual transactions based on predefined risk indicators.
-
-### Merchant-Level Risk
-
-Analyzes merchant activity to identify merchants associated with unusual or high-risk transaction patterns.
-
-### Geographic Risk
-
-Examines transaction activity across geographic locations to identify unusual concentrations or patterns.
+1. Configure source and processing metadata.
+2. Read active tables from metadata.
+3. Ingest SQL Server data using JDBC.
+4. Ingest CSV data using Auto Loader.
+5. Store raw data in the Bronze layer.
+6. Apply Full, Append, or Merge strategies.
+7. Use watermarks for incremental processing.
+8. Store refined data in Silver Delta tables.
+9. Create business-ready Gold datasets.
+10. Record pipeline execution details in the audit tables.
+11. Orchestrate the workflow using Databricks Jobs.
+12. Refresh dashboards and make analytics available through Genie.
+13. Send pipeline execution notifications.
 
 ---
 
-## 🚀 Key Features
+## 🎯 Business Outcomes
 
-* End-to-end cloud data pipeline
-* Bronze–Silver–Gold architecture
-* Distributed processing with PySpark
-* SQL-based analytical transformations
-* Delta Lake tables
-* Feature engineering for risk analytics
-* Explainable risk scoring
-* Customer, transaction and merchant risk analysis
-* Interactive Power BI monitoring dashboard
-* Scalable data engineering architecture
+The platform provides:
 
----
-
-## 💡 Business Use Case
-
-The platform is designed as a **risk analytics and early-warning solution** that can support risk teams in prioritizing transactions and entities that require additional review.
-
-Rather than replacing investigation or compliance processes, the platform provides **data-driven indicators and prioritization signals** that can help analysts focus on potentially higher-risk activity.
+* Reusable metadata-driven ingestion
+* Incremental and scalable data processing
+* Centralized banking analytics
+* Traceable pipeline execution
+* Automated workflow orchestration
+* Business-ready datasets for reporting
+* Natural-language analytics through Genie
 
 ---
 
-## 📌 Project Outcome
+## 💡 Key Data Engineering Concepts Demonstrated
 
-This project demonstrates practical experience in:
-
-* Cloud-based data engineering
-* ETL/ELT pipeline development
-* Structured and semi-structured data processing
-* PySpark transformations
-* SQL analytics
-* Delta Lake architecture
-* Risk feature engineering
-* Explainable scoring frameworks
-* Business intelligence and dashboard development
-
----
-
-
+* Metadata-Driven ETL
+* Medallion Architecture
+* Incremental Data Processing
+* Watermarking
+* Delta Lake MERGE
+* Auto Loader
+* JDBC Data Ingestion
+* PySpark Transformations
+* Databricks Jobs
+* Pipeline Monitoring and Auditing
+* Data Governance
+* Business Analytics
